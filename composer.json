@@ -1,0 +1,21 @@
+{
+    "name": "achais\/lianlianpay",
+    "description": "连连支付 SDK for PHP.",
+    "license": "MIT",
+    "require": {
+        "php":">=5.5.0",
+        "ext-openssl": "*",
+        "doctrine/cache": "1.10.*",
+        "guzzlehttp/guzzle": "~6.2",
+        "monolog/monolog": "^1.22 || ^2.0",
+        "pimple/pimple": "^3.0",
+        "ext-json": "*",
+        "symfony/http-foundation": "^4.0 || ^5.0",
+        "symfony/psr-http-message-bridge": "^0.3 || ^1.0 || ^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Achais\\LianLianPay\\": "src"
+        }
+    }
+}
