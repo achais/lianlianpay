@@ -44,6 +44,7 @@ class InstantPay extends AbstractAPI
         return date('YmdHis') . substr(explode(' ', microtime())[0], 2, 6) . rand(1000, 9999);
     }
 
+
     /**
      * 发起一笔付款申请
      *
@@ -154,19 +155,49 @@ class InstantPay extends AbstractAPI
     }
 
     /**
-     * @param array $params
-     * @return array
+     * 验证签名
+     * @param $params
+     * @return bool
+     * @throws InvalidArgumentException
      */
-    private function buildSignatureParams($params)
+    public function checkSignature($params)
+    {
+        if (!isset($params['sign'])) {
+            throw new InvalidArgumentException('sign 字段不存在');
+        }
+
+        $sign = $params['sign'];
+        unset($params['sign']);
+        $signRaw = $this->httpBuildKSortQuery($params);
+
+        $pubKey = $this->getConfig()->getInstantPayLianLianPublicKey();
+        $res = openssl_get_publickey($pubKey);
+
+        // 调用openssl内置方法验签，返回bool值
+        $result = (bool)openssl_verify($signRaw, base64_decode($sign), $res, OPENSSL_ALGO_MD5);
+        // 释放资源
+        openssl_free_key($res);
+        return $result;
+    }
+
+    private function httpBuildKSortQuery($params)
     {
         // 过滤空参数
         $params = Arr::where($params, function ($key, $value) {
             return !is_null($value);
         });
-        // 加密
+        // 排序
         ksort($params);
-        $signRaw = urldecode(http_build_query($params));
+        return urldecode(http_build_query($params));
+    }
 
+    /**
+     * @param array $params
+     * @return array
+     */
+    private function buildSignatureParams($params)
+    {
+        $signRaw = $this->httpBuildKSortQuery($params);
         //转换为openssl密钥，必须是没有经过pkcs8转换的私钥
         $res = openssl_get_privatekey($this->getConfig()->getInstantPayPrivateKey());
         //调用openssl内置签名方法，生成签名$sign
