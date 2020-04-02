@@ -80,7 +80,7 @@ abstract class AbstractAPI
     }
 
     /**
-     * Return the current accessToken.
+     * Return the current config.
      *
      * @return Config
      */
@@ -145,11 +145,6 @@ abstract class AbstractAPI
         $this->http->addMiddleware($this->signatureMiddleware());
     }
 
-    /**
-     * Attache access token to request query.
-     *
-     * @return \Closure
-     */
     protected function signatureMiddleware()
     {
         return function (callable $handler) {

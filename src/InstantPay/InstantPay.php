@@ -16,9 +16,32 @@ class InstantPay extends AbstractAPI
 
     const SIGN_TYPE_RSA = 'RSA';
 
-    private function getAvailableNoOrder()
+    protected $baseUrl;
+
+    /**
+     * 根据测试环境和生产环境选择 BaseUrl
+     * @return string
+     */
+    private function getBaseUrl()
     {
-        return date('YmdHis') . rand(100000, 999999);
+        if (empty($this->baseUrl)) {
+            if ($this->getConfig()->get('instant_pay.production')) {
+                $this->baseUrl = 'https://instantpay.lianlianpay.com';
+            } else {
+                $this->baseUrl = 'https://test.lianlianpay-inc.com';
+            }
+        }
+
+        return $this->baseUrl;
+    }
+
+    /**
+     * 生产有效的商户订单号(最好排重)
+     * @return string
+     */
+    public static function findAvailableNoOrder()
+    {
+        return date('YmdHis') . substr(explode(' ', microtime())[0], 2, 6) . rand(1000, 9999);
     }
 
     /**
@@ -29,29 +52,29 @@ class InstantPay extends AbstractAPI
      * @param string $acctName 收款方姓名
      * @param string $infoOrder 订单描述。说明付款用途，5W以上必传。
      * @param string $memo 收款备注。 传递至银行， 一般作为订单摘要展示。
-     * @param string $flagCard 对公对私标志。
+     * @param string $noOrder 商户订单号。
+     * @param string $riskItem 风险控制参数。
      * @param string $notifyUrl 接收异步通知的线上地址。
+     * @param string $flagCard 对公对私标志。
      * @param string $bankName 收款银行名称。
      * @param string $prcptcd 大额行号。 可调用大额行号查询接口进行查询。
      * @param string $bankCode 银行编码。 flag_card为1时， 建议选择大额行号+银行编码或开户支行名称+开户行所在市编码+银行编码中的一组传入。
      * @param string $cityCode 开户行所在省市编码， 标准地市编码。
      * @param string $braBankName 开户支行名称
-     * @param string $riskItem 风险控制参数。
      * @return Collection|null
      * @throws HttpException
      */
-    public function payment($moneyOrder, $cardNo, $acctName, $infoOrder, $memo, $flagCard = self::FLAG_CARD_PERSON,
-                            $riskItem = null, $notifyUrl = null, $bankName = null, $prcptcd = null,
+    public function payment($moneyOrder, $cardNo, $acctName, $infoOrder, $memo, $noOrder = null, $riskItem = null,
+                            $notifyUrl = null, $flagCard = self::FLAG_CARD_PERSON, $bankName = null, $prcptcd = null,
                             $bankCode = null, $cityCode = null, $braBankName = null)
     {
-        //$url = 'https://instantpay.lianlianpay.com/paymentapi/payment.htm';
-        $url = 'https://test.lianlianpay-inc.com/paymentapi/payment.htm';
+        $url = $this->getBaseUrl() . '/paymentapi/payment.htm';
         $params = [
             "oid_partner" => $this->config['instant_pay.oid_partner'],
             "platform" => $this->config['instant_pay.platform'],
             "api_version" => '1.0',
             "sign_type" => self::SIGN_TYPE_RSA,
-            "no_order" => $this->getAvailableNoOrder(),
+            "no_order" => $noOrder ?: $this->findAvailableNoOrder(),
             "dt_order" => date('YmdHis'),
             "money_order" => $moneyOrder,
             "card_no" => $cardNo,
@@ -86,8 +109,7 @@ class InstantPay extends AbstractAPI
      */
     public function confirmPayment($noOrder, $confirmCode, $notifyUrl = null)
     {
-        //$url = 'https://instantpay.lianlianpay.com/paymentapi/confirmPayment.htm';
-        $url = 'https://test.lianlianpay-inc.com/paymentapi/confirmPayment.htm';
+        $url = $this->getBaseUrl() . '/paymentapi/confirmPayment.htm';
         $params = [
             "oid_partner" => $this->config['instant_pay.oid_partner'],
             "platform" => $this->config['instant_pay.platform'],
@@ -116,8 +138,7 @@ class InstantPay extends AbstractAPI
             throw new InvalidArgumentException('noOrder 和 oidPayBill 不能都为空');
         }
 
-        //$url = 'https://instantpay.lianlianpay.com/paymentapi/queryPayment.htm';
-        $url = 'https://test.lianlianpay-inc.com/paymentapi/queryPayment.htm';
+        $url = $this->getBaseUrl() . '/paymentapi/queryPayment.htm';
         $params = [
             "oid_partner" => $this->config['instant_pay.oid_partner'],
             "sign_type" => self::SIGN_TYPE_RSA,
@@ -153,7 +174,7 @@ class InstantPay extends AbstractAPI
         //释放资源
         openssl_free_key($res);
         //base64编码
-        $params['sign'] =  base64_encode($signStr);;
+        $params['sign'] = base64_encode($signStr);;
 
         return $params;
     }
@@ -164,6 +185,7 @@ class InstantPay extends AbstractAPI
      */
     private function buildPayLoadParams($params)
     {
+        Log::debug('Build PayLoad Before:', $params);
         $oidPartner = $this->getConfig()->get('instant_pay.oid_partner');
         $payLoad = LLHelper::encryptPayLoad(json_encode($params), $this->getConfig()->getInstantPayLianLianPublicKey());
         return [

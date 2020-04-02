@@ -3,7 +3,6 @@
 namespace Achais\LianLianPay;
 
 use Achais\LianLianPay\Core\AbstractAPI;
-use Achais\LianLianPay\Core\AccessToken;
 use Achais\LianLianPay\Core\Http;
 use Achais\LianLianPay\Support\Log;
 use Doctrine\Common\Cache\FilesystemCache;
@@ -18,7 +17,6 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Class Application
  *
- * @property \Achais\LianLianPay\Core\AccessToken $access_token
  * @property \Achais\LianLianPay\InstantPay\InstantPay $instantPay
  *
  * @package Achais\LianLianPay
