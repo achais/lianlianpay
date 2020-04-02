@@ -158,12 +158,11 @@ class InstantPay extends AbstractAPI
      * 验证签名
      * @param $params
      * @return bool
-     * @throws InvalidArgumentException
      */
-    public function checkSignature($params)
+    public function verifySignature($params)
     {
         if (!isset($params['sign'])) {
-            throw new InvalidArgumentException('sign 字段不存在');
+            return false;
         }
 
         $sign = $params['sign'];
@@ -175,6 +174,9 @@ class InstantPay extends AbstractAPI
 
         // 调用openssl内置方法验签，返回bool值
         $result = (bool)openssl_verify($signRaw, base64_decode($sign), $res, OPENSSL_ALGO_MD5);
+
+        Log::debug('Verify Signature:', $result, $params);
+
         // 释放资源
         openssl_free_key($res);
         return $result;
