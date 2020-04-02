@@ -48,7 +48,7 @@ class LianLianPay extends Container
     {
         $config = new Foundation\Config($config);
 
-        $keys = ['instant_pay.oid_partner', 'instant_pay.private_key', 'instant_pay.public_key'];
+        $keys = ['instant_pay.oid_partner', 'instant_pay.private_key', 'instant_pay.public_key', 'instant_pay.ll_public_key'];
         foreach ($keys as $key) {
             !$config->has($key) || $config[$key] = '***' . substr($config[$key], -5);
         }
