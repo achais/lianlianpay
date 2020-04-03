@@ -175,7 +175,7 @@ class InstantPay extends AbstractAPI
         // 调用openssl内置方法验签，返回bool值
         $result = (bool)openssl_verify($signRaw, base64_decode($sign), $res, OPENSSL_ALGO_MD5);
 
-        Log::debug('Verify Signature:', $result, $params);
+        Log::debug('Verify Signature Result:', compact('result'));
 
         // 释放资源
         openssl_free_key($res);
