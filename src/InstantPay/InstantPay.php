@@ -18,6 +18,8 @@ class InstantPay extends AbstractAPI
 
     protected $baseUrl;
 
+    protected $production = false;
+
     /**
      * 根据测试环境和生产环境选择 BaseUrl
      * @return string
@@ -25,7 +27,8 @@ class InstantPay extends AbstractAPI
     private function getBaseUrl()
     {
         if (empty($this->baseUrl)) {
-            if ($this->getConfig()->get('instant_pay.production')) {
+            $this->production = $this->getConfig()->get('instant_pay.production');
+            if ($this->production) {
                 $this->baseUrl = 'https://instantpay.lianlianpay.com';
             } else {
                 $this->baseUrl = 'https://test.lianlianpay-inc.com';
@@ -73,7 +76,7 @@ class InstantPay extends AbstractAPI
         $params = [
             "oid_partner" => $this->config['instant_pay.oid_partner'],
             "platform" => $this->config['instant_pay.platform'],
-            "api_version" => '1.0',
+            "api_version" => $this->production ? '1.1' : '1.0',
             "sign_type" => self::SIGN_TYPE_RSA,
             "no_order" => $noOrder ?: $this->findAvailableNoOrder(),
             "dt_order" => date('YmdHis'),
