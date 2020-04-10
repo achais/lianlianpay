@@ -185,12 +185,17 @@ class InstantPay extends AbstractAPI
         return $result;
     }
 
-    private function httpBuildKSortQuery($params)
+    private function filterNull($params)
     {
         // 过滤空参数
         $params = Arr::where($params, function ($key, $value) {
             return !is_null($value);
         });
+        return $params;
+    }
+
+    private function httpBuildKSortQuery($params)
+    {
         // 排序
         ksort($params);
         return urldecode(http_build_query($params));
@@ -202,6 +207,7 @@ class InstantPay extends AbstractAPI
      */
     private function buildSignatureParams($params)
     {
+        $params = $this->filterNull($params);
         $signRaw = $this->httpBuildKSortQuery($params);
         //转换为openssl密钥，必须是没有经过pkcs8转换的私钥
         $res = openssl_get_privatekey($this->getConfig()->getInstantPayPrivateKey());
