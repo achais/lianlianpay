@@ -87,7 +87,7 @@ class InstantPay extends AbstractAPI
             "flag_card" => $flagCard,
             "memo" => $memo,
             "notify_url" => $notifyUrl ?: $this->config['instant_pay.notify_url'],
-            "risk_item" => $riskItem,
+            "risk_item" => $this->production ? $riskItem : null,
             // 以下是对公打款可选参数
             "bank_name" => $bankName,
             "prcptcd" => $prcptcd,
